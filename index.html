@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<head>
+    <title>TELETYPE CORPORATION LOVES YOU</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+    <style>
+        html {
+            background-color: #000;
+            font-family: monospace;
+        }
+
+        body {
+            background: #000;
+        }
+
+        header {
+            background: #000;
+            max-width: 780px;
+            margin: 46px auto;
+            padding-bottom: 46px;
+        }
+
+        h1 {
+            color: #0f0;
+            text-shadow: #004f00 4px 4px 0;
+            font-size: 32px;
+            margin: 16px auto;
+        }
+    </style>
+    <script>
+
+        function ttcly() {
+            let text = "TELETYPE CORPORATION LOVES YOU";
+            let callContext = new window.AudioContext();
+            let callerFrequencies = [1070, 1270, 1170] // Bell 103
+            let baudRate = 1 / 300; // 300 baud/s
+            let callOscillator = callContext.createOscillator();
+            let leadIn = 1;
+            let textEncoder = new TextEncoder();
+            let currentTime = callContext.currentTime;
+            let bitIndex = 0;
+
+            callOscillator.connect(callContext.destination);
+            callOscillator.start();
+
+            // Start with a lead in, which is a 1 second 1270 Hz tone
+            callOscillator.frequency.setValueAtTime(callerFrequencies[1], currentTime);
+
+            for (byte of textEncoder.encode(text)) {
+                // Start bit is always 0
+                var timing = leadIn + currentTime + (bitIndex * baudRate);
+                callOscillator.frequency.setValueAtTime(callerFrequencies[0], timing);
+                bitIndex++;
+                var binaryStr = byte.toString(2).padStart(8, 0);
+
+                // Each "byte" is 8 bits, even if some ASCII and UTF-8 values are 7 bit
+                for (i = 0; i < binaryStr.length; i++) {
+                    var frequency = parseInt(callerFrequencies[binaryStr[i]]);
+                    var timing = leadIn + currentTime + (bitIndex * baudRate);
+
+                    callOscillator.frequency.setValueAtTime(frequency, timing);
+                    bitIndex++;
+                }
+
+                // End bit is always 0
+                var timing = leadIn + currentTime + (bitIndex * baudRate);
+                callOscillator.frequency.setValueAtTime(callerFrequencies[0], timing);
+                bitIndex++;
+            }
+
+            // End by muting the transmission
+            callOscillator.stop(timing);
+        }
+
+        function sounderator() {
+            return ttcly();
+        }
+    </script>
+</head>
+
+<body onclick="ttcly()">
+    <header>
+        <h1>TELETYPE CORPORATION LOVES YOU</h1>
+    </header>
+</body>
